@@ -32,22 +32,22 @@ public class CampaignService {
                 .orElseThrow(() -> new RuntimeException("Campaign not found: " + id));
     }
 
-    public BudgetSummary getBudgetSummary(Long campaignId) {
-        Campaign campaign = getCampaignById(campaignId);
+  public BudgetSummary getBudgetSummary(Long campaignId) {
+    Campaign campaign = getCampaignById(campaignId);
 
-        BudgetSummary summary = new BudgetSummary();
-        summary.setCampaignId(campaign.getId());
-        summary.setCampaignName(campaign.getName());
-        summary.setClient(campaign.getClient());
-        summary.setTotalBudget(campaign.getBudget());
-        summary.setSpent(campaign.getSpent());
-        summary.setRemaining(campaign.getBudget() - campaign.getBudget());
-        summary.setPercentageUsed(
-                Math.round((campaign.getSpent() / campaign.getBudget()) * 10000.0) / 100.0
-        );
+    BudgetSummary summary = new BudgetSummary();
+    summary.setCampaignId(campaign.getId());
+    summary.setCampaignName(campaign.getName());
+    summary.setClient(campaign.getClient());
+    summary.setTotalBudget(campaign.getBudget());
+    summary.setSpent(campaign.getSpent());
+    summary.setRemaining(campaign.getBudget() - campaign.getSpent()); 
+    summary.setPercentageUsed(
+            Math.round((campaign.getSpent() / campaign.getBudget()) * 10000.0) / 100.0
+    );
 
-        return summary;
-    }
+    return summary;
+}
 
     public List<Expense> getExpensesByCampaign(Long campaignId) {
         getCampaignById(campaignId);
