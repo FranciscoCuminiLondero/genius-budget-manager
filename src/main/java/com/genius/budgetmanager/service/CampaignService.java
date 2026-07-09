@@ -1,5 +1,6 @@
 package com.genius.budgetmanager.service;
 
+import com.genius.budgetmanager.exception.CampaignNotFoundException;
 import com.genius.budgetmanager.model.BudgetSummary;
 import com.genius.budgetmanager.model.Campaign;
 import com.genius.budgetmanager.model.Expense;
@@ -28,26 +29,29 @@ public class CampaignService {
     }
 
     public Campaign getCampaignById(Long id) {
+        // FIX BUG-005: ahora lanza CampaignNotFoundException (no RuntimeException genérica)
+        // para que el GlobalExceptionHandler devuelva 404 solo en este caso puntual
         return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Campaign not found: " + id));
+                .orElseThrow(() -> new CampaignNotFoundException(id));
     }
 
-  public BudgetSummary getBudgetSummary(Long campaignId) {
-    Campaign campaign = getCampaignById(campaignId);
+    public BudgetSummary getBudgetSummary(Long campaignId) {
+        Campaign campaign = getCampaignById(campaignId);
 
-    BudgetSummary summary = new BudgetSummary();
-    summary.setCampaignId(campaign.getId());
-    summary.setCampaignName(campaign.getName());
-    summary.setClient(campaign.getClient());
-    summary.setTotalBudget(campaign.getBudget());
-    summary.setSpent(campaign.getSpent());
-    summary.setRemaining(campaign.getBudget() - campaign.getSpent()); 
-    summary.setPercentageUsed(
-            Math.round((campaign.getSpent() / campaign.getBudget()) * 10000.0) / 100.0
-    );
+        BudgetSummary summary = new BudgetSummary();
+        summary.setCampaignId(campaign.getId());
+        summary.setCampaignName(campaign.getName());
+        summary.setClient(campaign.getClient());
+        summary.setTotalBudget(campaign.getBudget());
+        summary.setSpent(campaign.getSpent());
+        // FIX BUG-003: era getBudget() - getBudget(), siempre daba 0
+        summary.setRemaining(campaign.getBudget() - campaign.getSpent());
+        summary.setPercentageUsed(
+                Math.round((campaign.getSpent() / campaign.getBudget()) * 10000.0) / 100.0
+        );
 
-    return summary;
-}
+        return summary;
+    }
 
     public List<Expense> getExpensesByCampaign(Long campaignId) {
         getCampaignById(campaignId);
@@ -84,7 +88,16 @@ public class CampaignService {
 
     public Campaign updateBudget(Long campaignId, Double newBudget) {
         Campaign campaign = getCampaignById(campaignId);
-        campaign.setSpent(0.0);
+
+        // FIX BUG-001: eliminado setSpent(0.0) que reseteaba el gasto acumulado
+        // Validación de negocio: no se puede asignar menos de lo ya gastado
+        if (newBudget < campaign.getSpent()) {
+            throw new IllegalArgumentException(
+                "El nuevo presupuesto (" + newBudget +
+                ") no puede ser menor al gasto acumulado de la campaña (" + campaign.getSpent() + ")"
+            );
+        }
+
         campaign.setBudget(newBudget);
         return campaign;
     }

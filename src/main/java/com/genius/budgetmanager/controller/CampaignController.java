@@ -7,13 +7,14 @@ import com.genius.budgetmanager.model.Expense;
 import com.genius.budgetmanager.model.GlobalBudgetSummary;
 import com.genius.budgetmanager.service.CampaignService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
+
 import java.util.List;
 
 @RestController
@@ -57,15 +58,17 @@ public class CampaignController {
         return ResponseEntity.ok(campaignService.getExpensesByCampaign(id));
     }
 
-   @PostMapping("/{id}/expenses")
-@Operation(summary = "Registrar un gasto en la campana")
-@ApiResponses(value = {
-    @ApiResponse(responseCode = "201", description = "Gasto registrado correctamente"),
-    @ApiResponse(responseCode = "404", description = "Campaña no encontrada")
-})
-public ResponseEntity<Expense> addExpense(@PathVariable Long id, @RequestBody Expense expense) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(campaignService.addExpense(id, expense));
-}
+    @PostMapping("/{id}/expenses")
+    @Operation(summary = "Registrar un gasto en la campana")
+    // FIX BUG-002: se documenta el 201 que ya devolvía el endpoint pero
+    // aparecía como "Undocumented" en Swagger
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Gasto registrado correctamente"),
+        @ApiResponse(responseCode = "404", description = "Campaña no encontrada")
+    })
+    public ResponseEntity<Expense> addExpense(@PathVariable Long id, @RequestBody Expense expense) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(campaignService.addExpense(id, expense));
+    }
 
     @PutMapping("/{id}/budget")
     @Operation(summary = "Actualizar presupuesto de la campana")
