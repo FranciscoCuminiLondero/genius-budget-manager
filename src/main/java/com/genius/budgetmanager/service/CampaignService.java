@@ -56,21 +56,24 @@ public class CampaignService {
         return repository.findExpensesByCampaignId(campaignId);
     }
 
-    public Expense addExpense(Long campaignId, Expense expense) {
-        Campaign campaign = getCampaignById(campaignId);
+   public Expense addExpense(Long campaignId, Expense expense) {
+    Campaign campaign = getCampaignById(campaignId);
 
-        // FIX bug ID cruzado: el campaignId siempre viene de la URL,
-        // ignoramos cualquier campaignId que venga en el body del request
-        expense.setCampaignId(campaignId);
-
-        // Calcular nuevo spent antes de persistir
-        double nuevoSpent = campaign.getSpent() + expense.getAmount();
-        campaign.setSpent(nuevoSpent);
-
-        // FIX bug matemático: pasamos la campaña actualizada al repository
-        // para que actualice el spent de forma atómica con el gasto
-        return repository.saveExpense(expense, campaign);
+    // FIX bug ID cruzado: si el body trae un campaignId distinto al de la URL → 400
+    if (expense.getCampaignId() != null && !expense.getCampaignId().equals(campaignId)) {
+        throw new IllegalArgumentException(
+            "El campaignId del body (" + expense.getCampaignId() +
+            ") no coincide con el id de la URL (" + campaignId + ")"
+        );
     }
+
+    expense.setCampaignId(campaignId);
+
+    double nuevoSpent = campaign.getSpent() + expense.getAmount();
+    campaign.setSpent(nuevoSpent);
+
+    return repository.saveExpense(expense, campaign);
+}
 
     public GlobalBudgetSummary getGlobalBudgetSummary() {
         List<Campaign> active = repository.findAll().stream()
