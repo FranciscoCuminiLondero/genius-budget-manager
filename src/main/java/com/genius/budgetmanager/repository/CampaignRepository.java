@@ -60,9 +60,16 @@ public class CampaignRepository {
                 .collect(Collectors.toList());
     }
 
-    public Expense saveExpense(Expense expense) {
+    // FIX bug matemático: ahora el repository actualiza el spent de la campaña
+    // de forma atómica junto con el guardado del gasto, evitando inconsistencias
+    public Expense saveExpense(Expense expense, Campaign campaign) {
         expense.setId(nextExpenseId++);
         expenses.add(expense);
+        // Actualizar spent directamente en el objeto de la lista interna
+        campaigns.stream()
+                .filter(c -> c.getId().equals(campaign.getId()))
+                .findFirst()
+                .ifPresent(c -> c.setSpent(campaign.getSpent()));
         return expense;
     }
 }

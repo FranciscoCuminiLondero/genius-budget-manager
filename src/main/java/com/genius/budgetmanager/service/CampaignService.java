@@ -29,8 +29,6 @@ public class CampaignService {
     }
 
     public Campaign getCampaignById(Long id) {
-        // FIX BUG-005: ahora lanza CampaignNotFoundException (no RuntimeException genérica)
-        // para que el GlobalExceptionHandler devuelva 404 solo en este caso puntual
         return repository.findById(id)
                 .orElseThrow(() -> new CampaignNotFoundException(id));
     }
@@ -60,9 +58,18 @@ public class CampaignService {
 
     public Expense addExpense(Long campaignId, Expense expense) {
         Campaign campaign = getCampaignById(campaignId);
+
+        // FIX bug ID cruzado: el campaignId siempre viene de la URL,
+        // ignoramos cualquier campaignId que venga en el body del request
         expense.setCampaignId(campaignId);
-        campaign.setSpent(campaign.getSpent() + expense.getAmount());
-        return repository.saveExpense(expense);
+
+        // Calcular nuevo spent antes de persistir
+        double nuevoSpent = campaign.getSpent() + expense.getAmount();
+        campaign.setSpent(nuevoSpent);
+
+        // FIX bug matemático: pasamos la campaña actualizada al repository
+        // para que actualice el spent de forma atómica con el gasto
+        return repository.saveExpense(expense, campaign);
     }
 
     public GlobalBudgetSummary getGlobalBudgetSummary() {

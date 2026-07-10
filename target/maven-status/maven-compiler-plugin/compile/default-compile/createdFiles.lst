@@ -1,2 +1,3 @@
 com\genius\budgetmanager\controller\ReportingController.class
 com\genius\budgetmanager\config\CorsConfig.class
+com\genius\budgetmanager\exception\CampaignNotFoundException.class
